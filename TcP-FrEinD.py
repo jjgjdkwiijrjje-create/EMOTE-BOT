@@ -23,7 +23,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 api_command_queue = asyncio.Queue()
 
 # ----------- API HANDLER (aiohttp) -----------
-async def process_api_queue():
+ async def process_api_queue():
     global whisper_writer, online_writer, key, iv
     while True:
         cmd_type, payload = await api_command_queue.get()
@@ -609,7 +609,8 @@ async def MaiiiinE():
     print(f" - Subscribe > Spideerio | Gaming ! (:")    
     api_task = asyncio.create_task(start_api_server())
     await asyncio.gather(task1, task2, api_task)
-    api_queue_task = asyncio.create_task(process_api_queue())
+
+async def StarTinG():
     while True:
         try: await asyncio.wait_for(MaiiiinE() , timeout = 7 * 60 * 60)
         except asyncio.TimeoutError: print("Token ExpiRed ! , ResTartinG")
