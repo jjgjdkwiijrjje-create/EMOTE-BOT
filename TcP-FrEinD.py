@@ -1,50 +1,38 @@
-import requests, os, psutil, sys, jwt, pickle, json, binascii, time, urllib3, base64, datetime, re, socket, threading, ssl, pytz, aiohttp
+import requests , os , psutil , sys , jwt , pickle , json , binascii , time , urllib3 , base64 , datetime , re , socket , threading , ssl , pytz , aiohttp
 from protobuf_decoder.protobuf_decoder import Parser
-from xC4 import * 
-from xHeaders import *
+from xC4 import * ; from xHeaders import *
 from datetime import datetime
 
 # Global key/iv and API queue
 key = None
 iv = None
 
+import asyncio
+api_command_queue = asyncio.Queue()
+
 from google.protobuf.timestamp_pb2 import Timestamp
 from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
-from Pb2 import DEcwHisPErMsG_pb2, MajoRLoGinrEs_pb2, PorTs_pb2, MajoRLoGinrEq_pb2, sQ_pb2, Team_msg_pb2
+from Pb2 import DEcwHisPErMsG_pb2 , MajoRLoGinrEs_pb2 , PorTs_pb2 , MajoRLoGinrEq_pb2 , sQ_pb2 , Team_msg_pb2
 from cfonts import render, say
 from aiohttp import web
-import asyncio
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  
+# ----------- API HANDLER -----------
+async def api_handler(request):
+    teamcode = request.rel_url.query.get('teamcode')
 
-# Asyncio queue for API -> bot commands
-api_command_queue = asyncio.Queue()
+    if not teamcode:
+        return web.json_response({"status": "error", "message": "Missing teamcode"}, status=400)
 
-# --- Add this function somewhere near the top ---
-async def process_api_queue():
-    global whisper_writer, online_writer, key, iv
-    while True:
-        try:
-            cmd_type, payload = await api_command_queue.get()
-            if cmd_type == "join_team":
-                teamcode = payload
-                if not key or not iv or not whisper_writer or not online_writer:
-                    print(f"[API] Cannot send join, bot not ready: {teamcode}")
-                else:
-                    try:
-                        EM = await GenJoinSquadsPacket(teamcode, key, iv)
-                        await SEndPacKeT(whisper_writer, online_writer, 'OnLine', EM)
-                        print(f"[API] Sent join squad packet for teamcode: {teamcode}")
-                    except Exception as e:
-                        print(f"[API] Error sending join for {teamcode}: {e}")
-            else:
-                print(f"[API] Unknown command type: {cmd_type}")
-        except Exception as e:
-            print(f"[API Queue Error]: {e}")
-        await asyncio.sleep(0.05)
+    try:
+        # একই কাজ যা /x/ কমান্ড করে
+        EM = await GenJoinSquadsPacket(teamcode, key, iv)
+        await SEndPacKeT(whisper_writer, online_writer, 'OnLine', EM)
+        return web.json_response({"status": "success", "message": f"Joined team {teamcode}"})
+    except Exception as e:
+        return web.json_response({"status": "error", "message": str(e)})
 
-# ----------- SERVER START  (aiohttp) -----------
+# ----------- SERVER START -----------
 async def start_api_server():
     app = web.Application()
     app.router.add_get('/api', api_handler)
@@ -52,7 +40,12 @@ async def start_api_server():
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', 8080)  # 8080 port এ চলবে
     await site.start()
-    print("[✅] API server running on http://0.0.0.0:8080/api?teamcode=123456")
+    print("[✅] API server running on http://localhost:8080/api?teamcode=123456")
+#EMOTES BY PARAHEX X CODEX
+
+
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)  
 
 # VariabLes dyli 
 #------------------------------------------#
@@ -76,8 +69,6 @@ Hr = {
     'X-GA': "v1 1",
     'ReleaseVersion': "OB51"}
 
-import random  # ensure random is imported for get_random_color
-
 # ---- Random Colores ----
 def get_random_color():
     colors = [
@@ -94,9 +85,9 @@ def get_random_color():
     return random.choice(colors)
 
 async def encrypted_proto(encoded_hex):
-    key_local = b'Yg&tc%DEuh6%Zc^8'
-    iv_local = b'6oyZDr22E3ychjM%'
-    cipher = AES.new(key_local, AES.MODE_CBC, iv_local)
+    key = b'Yg&tc%DEuh6%Zc^8'
+    iv = b'6oyZDr22E3ychjM%'
+    cipher = AES.new(key, AES.MODE_CBC, iv)
     padded_message = pad(encoded_hex, AES.block_size)
     encrypted_payload = cipher.encrypt(padded_message)
     return encrypted_payload
@@ -325,30 +316,6 @@ async def TcPChaT(ip, port, AutHToKen, key, iv, LoGinDaTaUncRypTinG, ready_event
             whisper_writer.write(bytes_payload)
             await whisper_writer.drain()
             ready_event.set()
-
-            # --- ADDED: Check API queue right after connection ready ---
-            try:
-                while not api_command_queue.empty():
-                    cmd_type, payload = api_command_queue.get_nowait()
-                    if cmd_type == "join_team":
-                        teamcode = payload
-                        try:
-                            if key is None or iv is None:
-                                print(f"[API] key/iv not ready for team {teamcode}")
-                            elif whisper_writer is None or online_writer is None:
-                                print(f"[API] writers not ready for team {teamcode}")
-                            else:
-                                EM = await GenJoinSquadsPacket(teamcode , key , iv)
-                                await SEndPacKeT(whisper_writer , online_writer , 'OnLine' , EM)
-                                print(f"[API] Sent join squad packet for teamcode: {teamcode}")
-                        except Exception as e:
-                            print(f"[API] Error sending join for {teamcode}: {e}")
-                    else:
-                        print(f"[API] Unknown cmd type: {cmd_type}")
-            except Exception as e:
-                print(f"[API] Queue handling error: {e}")
-            # --------------------------------------------------
-
             if LoGinDaTaUncRypTinG.Clan_ID:
                 clan_id = LoGinDaTaUncRypTinG.Clan_ID
                 clan_compiled_data = LoGinDaTaUncRypTinG.Clan_Compiled_Data
@@ -396,6 +363,8 @@ async def TcPChaT(ip, port, AutHToKen, key, iv, LoGinDaTaUncRypTinG, ready_event
                                 await SEndPacKeT(whisper_writer , online_writer , 'OnLine' , E)
                             except:
                                 print('msg in squad')
+
+
 
                         if inPuTMsG.startswith('/x/'):
                             CodE = inPuTMsG.split('/x/')[1]
@@ -557,8 +526,37 @@ async def TcPChaT(ip, port, AutHToKen, key, iv, LoGinDaTaUncRypTinG, ready_event
                             
             whisper_writer.close() ; await whisper_writer.wait_closed() ; whisper_writer = None
                     
+                    	
+                    	
         except Exception as e: print(f"ErroR {ip}:{port} - {e}") ; whisper_writer = None
         await asyncio.sleep(reconnect_delay)
+
+
+# ---- Background worker to process API queue ----
+async def process_api_queue():
+    while True:
+        try:
+            if not api_command_queue.empty():
+                cmd_type, payload = await api_command_queue.get()
+                if cmd_type == "join_team":
+                    teamcode = payload
+                    try:
+                        if key is None or iv is None:
+                            print(f"[API Worker] key/iv not ready for team {teamcode}; requeuing")
+                            await api_command_queue.put((cmd_type, payload))
+                        elif whisper_writer is None or online_writer is None:
+                            print(f"[API Worker] writers not ready for team {teamcode}; requeuing")
+                            await api_command_queue.put((cmd_type, payload))
+                        else:
+                            EM = await GenJoinSquadsPacket(teamcode, key, iv)
+                            await SEndPacKeT(whisper_writer, online_writer, 'OnLine', EM)
+                            print(f"[API Worker] ✅ Sent join squad packet for teamcode: {teamcode}")
+                    except Exception as e:
+                        print(f"[API Worker] Error sending join for {teamcode}: {e}")
+        except Exception as e:
+            print(f"[API Worker] Queue error: {e}")
+        await asyncio.sleep(1)
+# ---- end worker ----
 
 async def MaiiiinE():
     Uid , Pw = '4207496577','606840821F88420DC9AA5697481988C34714DB1495534DA63715821EF504CAAE'
@@ -609,11 +607,9 @@ async def MaiiiinE():
     print(f" - BoT STarTinG And OnLine on TarGet : {TarGeT} | BOT NAME : {acc_name}\n")
     print(f" - BoT sTaTus > GooD | OnLinE ! (:")    
     print(f" - Subscribe > Spideerio | Gaming ! (:")    
-    # <-- ADD this task -->
-    api_queue_task = asyncio.create_task(process_api_queue())
-
     api_task = asyncio.create_task(start_api_server())
-    await asyncio.gather(task1, task2, api_task, api_queue_task)
+    api_worker = asyncio.create_task(process_api_queue())
+    await asyncio.gather(task1, task2, api_task, api_worker)
 async def StarTinG():
     while True:
         try: await asyncio.wait_for(MaiiiinE() , timeout = 7 * 60 * 60)
