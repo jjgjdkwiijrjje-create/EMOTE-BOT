@@ -584,7 +584,7 @@ async def TcPChaT(ip, port, AutHToKen, key, iv, LoGinDaTaUncRypTinG, ready_event
                                 f"[00FF00]@like <uid> → Send 100 Like\n"
                                 f"[00FF00]@a <uid1> <uid2> <emote_id> → Send emote to players\n"
                                 f"[00FF00]hi / hello / salam / fen[/] → Greet command\n\n"
-                                f"{get_random_color()} Bot Owner: Mr Rafi\n"
+                                f"{get_random_color()} Bot Owner: AX ROMJAN\n"
                                 f" Telegram: @axemoteserver"
                                 f" Version: OB51"
                             )
@@ -629,7 +629,7 @@ async def process_api_queue():
 async def MaiiiinE():
     global key, iv, region  # <-- অবশ্যই ফাংশনের শুরুতে লিখো
 
-    Uid , Pw = '4290384853','75B174CEF9CAE31CF96763F2F7C128CF2F64146C431BCD7838D02F65A86F40DD'
+    Uid , Pw = '4289072864','C2F6FCD0B6A19FFF775BB15E72987C994B1FEAD13D11EB74674ADED40785C160'
     
     open_id , access_token = await GeNeRaTeAccEss(Uid , Pw)
     if not open_id or not access_token: 
